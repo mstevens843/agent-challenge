@@ -3,12 +3,12 @@
     {
       "id": "agent",
       "args": {
-        "image": "yourusername/nosana-eliza-agent:latest",
+        "image": "mstevens843/solwatch-agent:latest",
         "expose": 3000,
         "env": {
           "OPENAI_API_KEY": "nosana",
-          "OPENAI_API_URL": "TODO: replace with actual Nosana Qwen3.5 endpoint URL",
-          "MODEL_NAME": "qwen3.5-27b",
+          "OPENAI_API_URL": "https://4ksj3tve5bazqwkuyqdhwdpcar4yutcuxphwhckrdxmu.node.k8s.prd.nos.ci/v1",
+          "MODEL_NAME": "Qwen/Qwen3.5-4B",
           "SERVER_PORT": "3000",
           "NODE_ENV": "production"
         }
