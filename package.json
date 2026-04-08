@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@elizaos/core": "1.7.2",
-    "@elizaos/plugin-anthropic": "1.7.2",
+    "@elizaos/plugin-anthropic": "1.5.12",
     "@elizaos/plugin-bootstrap": "1.7.2",
     "@elizaos/plugin-openai": "1.7.2"
   },
