@@ -8,7 +8,11 @@ RUN apt-get update && apt-get install -y \
   make \
   g++ \
   git \
+  curl \
   && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Disable telemetry
 ENV ELIZAOS_TELEMETRY_DISABLED=true
@@ -39,9 +43,14 @@ RUN CLIENT_PATH=$(find /app/node_modules/.pnpm -path "*/@elizaos/server/dist/cli
     cp -r /tmp/frontend/* "$CLIENT_PATH"/ && \
     rm -rf /tmp/frontend
 
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=3000
+ENV OLLAMA_MODEL=qwen2.5:3b
 
-CMD ["pnpm", "start"]
+CMD ["/app/entrypoint.sh"]
