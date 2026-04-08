@@ -35,16 +35,7 @@ COPY . .
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
-# Replace default ElizaOS client with custom Soliza frontend
-# pnpm stores packages in .pnpm/ — resolve the actual path and replace
-COPY frontend/ /tmp/frontend/
-RUN CLIENT_PATH=$(find /app/node_modules/.pnpm -path "*/@elizaos/server/dist/client" -type d | head -1) && \
-    echo "Found client path: $CLIENT_PATH" && \
-    rm -rf "$CLIENT_PATH"/* && \
-    cp -r /tmp/frontend/* "$CLIENT_PATH"/ && \
-    rm -rf /tmp/frontend
-
-# Copy entrypoint script
+# Copy entrypoint script (handles frontend replacement at runtime)
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
@@ -52,6 +43,6 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=3000
-ENV OLLAMA_MODEL=qwen2.5:3b
+ENV OLLAMA_MODEL=qwen2.5:1.5b
 
 CMD ["/app/entrypoint.sh"]
