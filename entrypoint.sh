@@ -37,7 +37,7 @@ for i in $(seq 1 30); do
 done
 
 # ─── 3. Check Nosana LLM endpoint ───
-NOSANA_URL="${NOSANA_LLM_ENDPOINT:-https://6vq2bcqphcansrs9b88ztxfs88oqy7etah2ugudytv2x.node.k8s.prd.nos.ci/v1}"
+NOSANA_URL="${NOSANA_LLM_ENDPOINT:-https://5i8frj7ann99bbw9gzpprvzj2esugg39hxbb4unypskq.node.k8s.prd.nos.ci/v1}"
 echo "[ENTRYPOINT] Testing Nosana LLM: $NOSANA_URL/models"
 
 NOSANA_OK=false
@@ -56,9 +56,9 @@ if [ "$NOSANA_OK" = true ]; then
   export OPENAI_API_KEY="${NOSANA_API_KEY:-nos_k9__Rp0hnoBg9fIpYtWk-Ltt2gCdztdE0nscdsM4SEI}"
   export OPENAI_API_URL="$NOSANA_URL"
   export OPENAI_BASE_URL="$NOSANA_URL"
-  export OPENAI_SMALL_MODEL="${NOSANA_MODEL:-Qwen3.5-27B-AWQ-4bit}"
-  export OPENAI_LARGE_MODEL="${NOSANA_MODEL:-Qwen3.5-27B-AWQ-4bit}"
-  export MODEL_NAME="${NOSANA_MODEL:-Qwen3.5-27B-AWQ-4bit}"
+  export OPENAI_SMALL_MODEL="${NOSANA_MODEL:-Qwen3.5-9B-FP8}"
+  export OPENAI_LARGE_MODEL="${NOSANA_MODEL:-Qwen3.5-9B-FP8}"
+  export MODEL_NAME="${NOSANA_MODEL:-Qwen3.5-9B-FP8}"
 else
   # ─── 4. Fallback: pull Ollama model and VERIFY it works ───
   echo "[ENTRYPOINT] Nosana unavailable — using local Ollama"
