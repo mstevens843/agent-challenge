@@ -1,55 +1,94 @@
 /**
- * api.js — ElizaOS API client for chat functionality
+ * api.js — ElizaOS v1.7.2 API client for Soliza chat
+ *
+ * Verified against ElizaOS server source code:
+ * - All responses wrapped in { success: true, data: { ... } }
+ * - Sessions at /api/messaging/sessions (NOT /api/sessions)
+ * - Messages at /api/messaging/sessions/:id/messages
  */
 
 const API_BASE = window.location.origin + "/api";
+const MESSAGING_BASE = API_BASE + "/messaging";
 
 let currentAgentId = null;
 let currentSessionId = null;
 
-async function initializeAgent() {
-  console.log("[ELIZA-API] initializeAgent → fetching agents from", API_BASE + "/agents");
-  try {
-    const res = await fetch(`${API_BASE}/agents`);
-    console.log("[ELIZA-API] /agents status:", res.status);
-    if (!res.ok) throw new Error(`Failed to fetch agents (${res.status})`);
-    const data = await res.json();
-    console.log("[ELIZA-API] /agents response:", JSON.stringify(data).slice(0, 200));
+// Generate a stable user ID per browser session
+function getUserId() {
+  let uid = sessionStorage.getItem("soliza_user_id");
+  if (!uid) {
+    uid = crypto.randomUUID();
+    sessionStorage.setItem("soliza_user_id", uid);
+  }
+  return uid;
+}
 
-    const agents = data.agents || data;
+async function initializeAgent() {
+  console.log("[ELIZA-API] === initializeAgent START ===");
+  console.log("[ELIZA-API] API_BASE:", API_BASE);
+  console.log("[ELIZA-API] MESSAGING_BASE:", MESSAGING_BASE);
+
+  try {
+    // Step 1: Fetch agents
+    const agentsUrl = `${API_BASE}/agents`;
+    console.log("[ELIZA-API] Step 1: GET", agentsUrl);
+    const res = await fetch(agentsUrl);
+    console.log("[ELIZA-API] /agents status:", res.status);
+    if (!res.ok) throw new Error(`GET /agents failed (${res.status})`);
+
+    const raw = await res.json();
+    console.log("[ELIZA-API] /agents raw response:", JSON.stringify(raw).slice(0, 500));
+
+    // ElizaOS v1.7.2 wraps responses: { success: true, data: { agents: [...] } }
+    const payload = raw.data || raw;
+    const agents = payload.agents || payload;
+    console.log("[ELIZA-API] Unwrapped agents:", JSON.stringify(agents).slice(0, 300));
+
     if (Array.isArray(agents) && agents.length > 0) {
-      currentAgentId = agents[0].id;
-    } else if (typeof agents === "object") {
+      // Pick the first active agent, or the first agent
+      const active = agents.find(a => a.status === "active") || agents[0];
+      currentAgentId = active.id;
+    } else if (typeof agents === "object" && !Array.isArray(agents)) {
+      // Fallback: agents might be a map { id: agent }
       const ids = Object.keys(agents);
       if (ids.length > 0) currentAgentId = ids[0];
     }
 
-    console.log("[ELIZA-API] agentId:", currentAgentId || "NONE FOUND");
-    if (!currentAgentId) throw new Error("No agents found");
+    console.log("[ELIZA-API] Resolved agentId:", currentAgentId || "NONE FOUND");
+    if (!currentAgentId) throw new Error("No agents found in response");
 
-    // Create a session
-    console.log("[ELIZA-API] Creating session for agent:", currentAgentId);
-    const sessionRes = await fetch(`${API_BASE}/sessions`, {
+    // Step 2: Create session via /api/messaging/sessions
+    const userId = getUserId();
+    const sessionsUrl = `${MESSAGING_BASE}/sessions`;
+    const sessionBody = { agentId: currentAgentId, userId: userId };
+    console.log("[ELIZA-API] Step 2: POST", sessionsUrl);
+    console.log("[ELIZA-API] Session body:", JSON.stringify(sessionBody));
+
+    const sessionRes = await fetch(sessionsUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        agentId: currentAgentId,
-      }),
+      body: JSON.stringify(sessionBody),
     });
 
     console.log("[ELIZA-API] /sessions status:", sessionRes.status);
-    if (!sessionRes.ok) {
-      const errBody = await sessionRes.text();
-      console.log("[ELIZA-API] /sessions error body:", errBody);
-      throw new Error("Failed to create session");
-    }
-    const sessionData = await sessionRes.json();
-    currentSessionId = sessionData.sessionId || sessionData.id;
-    console.log("[ELIZA-API] sessionId:", currentSessionId || "NONE");
+    const sessionRaw = await sessionRes.json();
+    console.log("[ELIZA-API] /sessions raw response:", JSON.stringify(sessionRaw).slice(0, 500));
 
+    if (!sessionRes.ok) {
+      throw new Error(`POST /sessions failed (${sessionRes.status}): ${JSON.stringify(sessionRaw)}`);
+    }
+
+    // Unwrap { success, data } wrapper
+    const sessionData = sessionRaw.data || sessionRaw;
+    currentSessionId = sessionData.sessionId || sessionData.id;
+    console.log("[ELIZA-API] Resolved sessionId:", currentSessionId || "NONE");
+
+    if (!currentSessionId) throw new Error("No sessionId in response");
+
+    console.log("[ELIZA-API] === initializeAgent SUCCESS ===");
     return true;
   } catch (err) {
-    console.error("[ELIZA-API] initializeAgent FAILED:", err.message);
+    console.error("[ELIZA-API] === initializeAgent FAILED ===", err.message);
     return false;
   }
 }
@@ -59,55 +98,60 @@ async function sendChatMessage(text) {
   if (!currentSessionId) {
     console.log("[ELIZA-API] No session — initializing agent first");
     const ok = await initializeAgent();
-    if (!ok) return "Agent is not available. The LLM endpoint may be starting up.";
+    if (!ok) return "Agent is not available. Check browser console for details.";
   }
 
   try {
-    const url = `${API_BASE}/sessions/${currentSessionId}/messages`;
+    const url = `${MESSAGING_BASE}/sessions/${currentSessionId}/messages`;
+    const body = { content: text, transport: "http" };
     console.log("[ELIZA-API] POST", url);
+    console.log("[ELIZA-API] Message body:", JSON.stringify(body));
+
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: text,
-        transport: "http",
-      }),
+      body: JSON.stringify(body),
     });
 
-    console.log("[ELIZA-API] message response status:", res.status);
+    console.log("[ELIZA-API] message status:", res.status);
     if (!res.ok) {
       const errText = await res.text();
-      console.log("[ELIZA-API] message error body:", errText.slice(0, 300));
+      console.log("[ELIZA-API] message error:", errText.slice(0, 500));
       throw new Error(errText || `HTTP ${res.status}`);
     }
 
-    const data = await res.json();
-    console.log("[ELIZA-API] message response keys:", Object.keys(data));
-    console.log("[ELIZA-API] message response preview:", JSON.stringify(data).slice(0, 300));
+    const raw = await res.json();
+    console.log("[ELIZA-API] message raw response:", JSON.stringify(raw).slice(0, 500));
 
-    // Extract the agent's response text
-    if (data.agentResponse?.text) { console.log("[ELIZA-API] Found agentResponse.text"); return data.agentResponse.text; }
-    if (data.response?.text) { console.log("[ELIZA-API] Found response.text"); return data.response.text; }
-    if (data.text) { console.log("[ELIZA-API] Found data.text"); return data.text; }
-    if (typeof data === "string") { console.log("[ELIZA-API] Response is string"); return data; }
+    // Unwrap { success, data } wrapper
+    const data = raw.data || raw;
 
-    // If we get an array of messages, find the agent's response
+    // Try multiple response formats (ElizaOS varies by version/transport)
+    if (data.agentResponse?.text) return data.agentResponse.text;
+    if (data.response?.text) return data.response.text;
+    if (data.text) return data.text;
+    if (typeof data === "string") return data;
+    if (data.message?.text) return data.message.text;
+    if (data.content?.text) return data.content.text;
+
+    // Array of messages
     if (Array.isArray(data)) {
       console.log("[ELIZA-API] Response is array, length:", data.length);
-      const agentMsg = data.find(m => m.entityId !== m.userId || m.role === "assistant");
+      const agentMsg = data.find(m => m.role === "assistant" || m.entityId !== m.userId);
       if (agentMsg?.content?.text) return agentMsg.content.text;
+      if (agentMsg?.text) return agentMsg.text;
     }
 
-    console.log("[ELIZA-API] Could not parse response structure");
-    return "Received response but couldn't parse it. The agent may still be initializing.";
+    console.log("[ELIZA-API] Unrecognized response structure:", Object.keys(data));
+    return "Received response but couldn't parse it. Check console for raw data.";
   } catch (err) {
     console.error("[ELIZA-API] sendChatMessage ERROR:", err.message);
-    return `Connection error: ${err.message}. The agent may be starting up.`;
+    return `Error: ${err.message}`;
   }
 }
 
 async function checkHealth() {
-  const url = `${API_BASE}/../healthz`;
+  const url = window.location.origin + "/healthz";
   console.log("[ELIZA-API] Health check →", url);
   try {
     const res = await fetch(url, { method: "GET" });

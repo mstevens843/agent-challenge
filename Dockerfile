@@ -16,8 +16,9 @@ ENV DO_NOT_TRACK=1
 
 WORKDIR /app
 
-# Install pnpm
+# Install pnpm and bun (ElizaOS CLI requires bun runtime)
 RUN npm install -g pnpm
+RUN npm install -g bun
 
 # Copy package manifest and install dependencies
 COPY package.json ./
@@ -29,9 +30,14 @@ COPY . .
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
-# Replace default ElizaOS client with custom SolWatch frontend
-RUN rm -rf /app/node_modules/@elizaos/server/dist/client/*
-COPY frontend/ /app/node_modules/@elizaos/server/dist/client/
+# Replace default ElizaOS client with custom Soliza frontend
+# pnpm stores packages in .pnpm/ — resolve the actual path and replace
+COPY frontend/ /tmp/frontend/
+RUN CLIENT_PATH=$(find /app/node_modules/.pnpm -path "*/@elizaos/server/dist/client" -type d | head -1) && \
+    echo "Found client path: $CLIENT_PATH" && \
+    rm -rf "$CLIENT_PATH"/* && \
+    cp -r /tmp/frontend/* "$CLIENT_PATH"/ && \
+    rm -rf /tmp/frontend
 
 EXPOSE 3000
 
