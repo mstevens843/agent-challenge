@@ -89,6 +89,19 @@ async function initializeAgent() {
     return true;
   } catch (err) {
     console.error("[ELIZA-API] === initializeAgent FAILED ===", err.message);
+
+    // Probe server health to diagnose WHY
+    try {
+      const healthRes = await fetch(window.location.origin + "/healthz");
+      console.error("[ELIZA-API] /healthz status:", healthRes.status);
+      if (healthRes.ok) {
+        const healthData = await healthRes.json().catch(() => null);
+        console.error("[ELIZA-API] /healthz body:", JSON.stringify(healthData));
+      }
+    } catch (e) {
+      console.error("[ELIZA-API] /healthz unreachable:", e.message);
+    }
+
     return false;
   }
 }
@@ -117,7 +130,33 @@ async function sendChatMessage(text) {
     if (!res.ok) {
       const errText = await res.text();
       console.log("[ELIZA-API] message error:", errText.slice(0, 500));
-      throw new Error(errText || `HTTP ${res.status}`);
+
+      // Server hides real error — fetch it from agent logs endpoint
+      let reason = errText.slice(0, 300);
+      if (currentAgentId) {
+        try {
+          const logsRes = await fetch(`${API_BASE}/agents/${currentAgentId}/logs`);
+          if (logsRes.ok) {
+            const logsRaw = await logsRes.json();
+            const logs = logsRaw.data || logsRaw;
+            const logsArr = Array.isArray(logs) ? logs : (logs.logs || []);
+            // Find the most recent error log
+            const errorLog = logsArr.reverse?.().find(l =>
+              (l.level === "error" || l.type === "error") &&
+              (l.message || l.body || l.msg || "").toString().includes("Error")
+            );
+            if (errorLog) {
+              reason = errorLog.message || errorLog.body || errorLog.msg || JSON.stringify(errorLog);
+              console.error("[ELIZA-API] SERVER ERROR from /logs:", reason);
+            }
+          }
+        } catch (_) { /* logs endpoint not available */ }
+      }
+
+      // Also log the raw 500 body
+      console.error("[ELIZA-API] Raw 500 response:", errText);
+      console.error("[ELIZA-API] Server-side reason:", reason);
+      throw new Error(reason);
     }
 
     const raw = await res.json();
@@ -161,4 +200,53 @@ async function checkHealth() {
     console.log("[ELIZA-API] Health check FAILED:", e.message);
     return false;
   }
+}
+
+// Full diagnostic — call from browser console: diagnose()
+async function diagnose() {
+  console.log("=== SOLIZA DIAGNOSTIC ===");
+  const origin = window.location.origin;
+
+  // 1. Health
+  try {
+    const h = await fetch(origin + "/healthz");
+    const hb = await h.json().catch(() => h.statusText);
+    console.log("1. /healthz:", h.status, hb);
+  } catch (e) { console.error("1. /healthz FAILED:", e.message); }
+
+  // 2. Agents
+  try {
+    const a = await fetch(origin + "/api/agents");
+    const ab = await a.json();
+    const agents = ab.data?.agents || ab.agents || [];
+    console.log("2. /api/agents:", a.status, "count:", agents.length, agents.map(x => ({ id: x.id, name: x.name, status: x.status })));
+  } catch (e) { console.error("2. /api/agents FAILED:", e.message); }
+
+  // 3. Sessions health
+  try {
+    const s = await fetch(origin + "/api/messaging/sessions/health");
+    const sb = await s.json().catch(() => s.statusText);
+    console.log("3. /sessions/health:", s.status, sb);
+  } catch (e) { console.error("3. /sessions/health FAILED:", e.message); }
+
+  // 4. Agent logs (last 5 errors)
+  if (currentAgentId) {
+    try {
+      const l = await fetch(origin + "/api/agents/" + currentAgentId + "/logs");
+      const lb = await l.json();
+      const logs = lb.data || lb;
+      const logsArr = Array.isArray(logs) ? logs : (logs.logs || []);
+      const errors = logsArr.filter(x => x.level === "error" || x.type === "error").slice(-5);
+      console.log("4. Agent errors (last 5):", errors.length ? errors : "NONE");
+    } catch (e) { console.error("4. /logs FAILED:", e.message); }
+  } else {
+    console.log("4. Skipped (no agentId yet — send a message first)");
+  }
+
+  // 5. Try a test session + message
+  console.log("5. Testing full message flow...");
+  const result = await sendChatMessage("ping");
+  console.log("5. Result:", result);
+
+  console.log("=== END DIAGNOSTIC ===");
 }
