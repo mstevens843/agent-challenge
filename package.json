@@ -11,7 +11,7 @@
     "@elizaos/core": "1.7.2",
     "@elizaos/plugin-anthropic": "1.5.12",
     "@elizaos/plugin-bootstrap": "1.7.2",
-    "@elizaos/plugin-openai": "1.7.2"
+    "@elizaos/plugin-openai": "1.6.0"
   },
   "devDependencies": {
     "@elizaos/cli": "^1.0.0",
