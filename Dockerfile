@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Install pnpm and bun (ElizaOS CLI requires bun runtime)
 RUN npm install -g pnpm
-RUN npm install -g bun
+RUN curl -fsSL https://bun.sh/install | bash && ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 
 # Copy package manifest and install dependencies
 COPY package.json ./
@@ -45,4 +45,4 @@ ENV NODE_ENV=production
 ENV SERVER_PORT=3000
 ENV OLLAMA_MODEL=qwen2.5:1.5b
 
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
