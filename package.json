@@ -13,6 +13,11 @@
     "@elizaos/plugin-bootstrap": "1.7.2",
     "@elizaos/plugin-openai": "1.6.0"
   },
+  "pnpm": {
+    "overrides": {
+      "@ai-sdk/openai": "1.0.5"
+    }
+  },
   "devDependencies": {
     "@elizaos/cli": "^1.0.0",
     "@types/node": "^25.5.2",
