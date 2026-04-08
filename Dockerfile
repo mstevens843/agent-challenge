@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Install pnpm and bun (ElizaOS CLI requires bun runtime)
 RUN npm install -g pnpm
-RUN curl -fsSL https://bun.sh/install | bash && ln -sf /root/.bun/bin/bun /usr/local/bin/bun
+COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
 
 # Copy package manifest and install dependencies
 COPY package.json ./
@@ -35,7 +35,20 @@ COPY . .
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
-# Copy entrypoint script (handles frontend replacement at runtime)
+# Replace default ElizaOS client with custom Soliza frontend
+COPY frontend/ /tmp/frontend/
+RUN CLIENT_PATH=$(find /app/node_modules/.pnpm -path "*/@elizaos/server/dist/client" -type d | head -1) && \
+    if [ -n "$CLIENT_PATH" ]; then \
+      echo "Found client path: $CLIENT_PATH" && \
+      rm -rf "$CLIENT_PATH"/* && \
+      cp -r /tmp/frontend/* "$CLIENT_PATH"/ && \
+      echo "Frontend replaced successfully"; \
+    else \
+      echo "WARNING: Client path not found"; \
+    fi && \
+    rm -rf /tmp/frontend
+
+# Copy entrypoint script
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
