@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Install pnpm and bun (ElizaOS CLI requires bun runtime)
 RUN npm install -g pnpm
-COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
+RUN npm install -g bun
 
 # Copy package manifest and install dependencies
 COPY package.json ./
