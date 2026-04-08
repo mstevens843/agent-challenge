@@ -29,6 +29,10 @@ COPY . .
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
+# Replace default ElizaOS client with custom SolWatch frontend
+RUN rm -rf /app/node_modules/@elizaos/server/dist/client/*
+COPY frontend/ /app/node_modules/@elizaos/server/dist/client/
+
 EXPOSE 3000
 
 ENV NODE_ENV=production

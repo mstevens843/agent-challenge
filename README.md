@@ -1,4 +1,4 @@
-# SolWatch - Solana DeFi Portfolio Intelligence Agent
+# Soliza - Solana DeFi Portfolio Intelligence Agent
 
 ![ElizaOS](./assets/NosanaXEliza.jpg)
 
@@ -8,15 +8,15 @@ A personal AI agent that monitors Solana wallets, tracks token prices, analyzes 
 
 ## Project Description
 
-SolWatch is a privacy-first Solana DeFi portfolio intelligence agent that runs entirely on decentralized infrastructure. Unlike centralized portfolio trackers that harvest your data, SolWatch operates on Nosana's GPU network — your wallet queries and financial data never touch a corporate server.
+Soliza is a privacy-first Solana DeFi portfolio intelligence agent that runs entirely on decentralized infrastructure. Unlike centralized portfolio trackers that harvest your data, Soliza operates on Nosana's GPU network — your wallet queries and financial data never touch a corporate server.
 
 The agent provides four core capabilities through natural conversation: real-time wallet balance checking via Solana's public RPC, token price lookups through Jupiter's DEX aggregator API, full portfolio summaries with USD valuations, and curated DeFi yield discovery across major Solana protocols including Marinade, Jito, Raydium, Orca, Kamino, and Drift.
 
-Built as a custom ElizaOS plugin, SolWatch demonstrates how personal AI agents can provide genuine financial utility while respecting user privacy. Every query hits public, permissionless APIs — no API keys, no account creation, no data collection. Just paste a wallet address and get instant intelligence.
+Built as a custom ElizaOS plugin, Soliza demonstrates how personal AI agents can provide genuine financial utility while respecting user privacy. Every query hits public, permissionless APIs — no API keys, no account creation, no data collection. Just paste a wallet address and get instant intelligence.
 
 The agent is designed for Solana-native users who want quick, conversational access to on-chain data without switching between block explorers, DEX interfaces, and yield aggregators. Ask "check my wallet" or "what are the best yields on Solana" and get concise, data-driven responses.
 
-Powered by Qwen3.5-27B running on Nosana's decentralized compute network, SolWatch proves that personal AI doesn't require Big Tech infrastructure. It's your agent, your data, your infrastructure.
+Powered by Qwen3.5-27B running on Nosana's decentralized compute network, Soliza proves that personal AI doesn't require Big Tech infrastructure. It's your agent, your data, your infrastructure.
 
 ---
 
@@ -34,7 +34,7 @@ Powered by Qwen3.5-27B running on Nosana's decentralized compute network, SolWat
 ## Architecture
 
 ```
-User <-> ElizaOS Web UI (:3000) <-> SolWatch Plugin
+User <-> ElizaOS Web UI (:3000) <-> Soliza Plugin
                                         |
                           +--------------+--------------+
                           |              |              |
@@ -77,7 +77,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to chat with SolWatch.
+Open [http://localhost:3000](http://localhost:3000) to chat with Soliza.
 
 ### Example Queries
 
@@ -93,9 +93,9 @@ Open [http://localhost:3000](http://localhost:3000) to chat with SolWatch.
 ### 1. Build & Push Docker Image
 
 ```bash
-docker build -t mstevens843/solwatch-agent:latest .
+docker build -t mattinfra/soliza-agent:latest .
 docker login
-docker push mstevens843/solwatch-agent:latest
+docker push mattinfra/soliza-agent:latest
 ```
 
 ### 2. Deploy via Nosana Dashboard
@@ -117,7 +117,7 @@ Visit the public URL provided by Nosana and send a test message.
 ```
 nosana_aiagent/
   characters/
-    agent.character.json    # SolWatch personality & knowledge
+    agent.character.json    # Soliza personality & knowledge
   src/
     index.ts                # Custom plugin: 4 actions (wallet, price, portfolio, yield)
   nos_job_def/

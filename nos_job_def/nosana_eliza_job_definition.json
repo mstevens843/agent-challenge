@@ -3,14 +3,18 @@
     {
       "id": "agent",
       "args": {
-        "image": "mstevens843/solwatch-agent:latest",
+        "image": "mattinfra/solwatch-agent:latest",
         "expose": 3000,
         "env": {
           "OPENAI_API_KEY": "nosana",
           "OPENAI_API_URL": "https://4ksj3tve5bazqwkuyqdhwdpcar4yutcuxphwhckrdxmu.node.k8s.prd.nos.ci/v1",
           "MODEL_NAME": "Qwen/Qwen3.5-4B",
           "SERVER_PORT": "3000",
-          "NODE_ENV": "production"
+          "NODE_ENV": "production",
+          "HELIUS_API_KEY": "39cdc116-aafd-4585-8452-887e57ff0bab",
+          "HELIUS_RPC_URL": "https://beta.helius-rpc.com/?api-key=39cdc116-aafd-4585-8452-887e57ff0bab",
+          "BIRDEYE_API_KEY": "9686a7e74eb741acaf12417b0f80d93d",
+          "CHAINSTACK_RPC_URL": "https://solana-mainnet.core.chainstack.com/451cff0d6266cda453c02a8b34074bff"
         }
       },
       "execution": {
