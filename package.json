@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "elizaos start --character ./characters/agent.character.json",
+    "start": "bash /app/entrypoint.sh",
     "dev": "elizaos dev --character ./characters/agent.character.json"
   },
   "dependencies": {

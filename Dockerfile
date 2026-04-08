@@ -9,11 +9,7 @@ RUN apt-get update && apt-get install -y \
   g++ \
   git \
   curl \
-  zstd \
   && rm -rf /var/lib/apt/lists/*
-
-# Install Ollama
-RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Disable telemetry
 ENV ELIZAOS_TELEMETRY_DISABLED=true
@@ -56,6 +52,4 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=3000
-ENV OLLAMA_MODEL=qwen2.5:1.5b
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["pnpm", "start"]
