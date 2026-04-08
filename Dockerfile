@@ -25,6 +25,9 @@ RUN npm install -g bun
 COPY package.json ./
 RUN pnpm install
 
+# Patch plugin-openai to use /v1/chat/completions instead of /v1/responses (vLLM doesn't support responses API)
+RUN sed -i 's/createOpenAI({ apiKey: apiKey ?? "", baseURL })/createOpenAI({ apiKey: apiKey ?? "", baseURL, compatibility: "compatible" })/' $(find /app/node_modules/.pnpm -path "*plugin-openai*/dist/node/index.node.js" | head -1)
+
 # Copy all source files
 COPY . .
 
